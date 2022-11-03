@@ -1,6 +1,6 @@
 # ClickRecorder
 Todo:
-Fix cursor visibility bug
-Convert total time clicking to MS
-Fix Cps calculation
-Add Delay Randomization (Maybe)
+Fix cursor visibility bug<br>
+Convert total time clicking to MS<br>
+Fix Cps calculation<br>
+Add Delay Randomization (Maybe)<br>
