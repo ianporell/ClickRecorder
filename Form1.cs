@@ -91,10 +91,12 @@ namespace ClickRecorder
 
             clickDelay.Stop();
 
-            clicks += recordingTime.Elapsed.TotalSeconds;
+            clicks += recordingTime.ElapsedMilliseconds;
             recordingTime.Stop();
 
-            RemoveOutliers(ref clicks);
+            Trace.WriteLine(clicks);
+            int outliersRemoved = RemoveOutliers(ref clicks);
+            Trace.WriteLine(clicks);
 
             int fileNum = int.Parse(File.ReadAllText(directory + @"\Clicks\info.drill")) + 1;
             File.WriteAllText(directory + @"\Clicks\info.drill", fileNum.ToString());
@@ -103,37 +105,59 @@ namespace ClickRecorder
             File.WriteAllText(directory + $@"\Clicks\clicks{fileNum}.drill", clicks);
 
             //new Message("Remove outliers?", "If so, select jitter or butterfly", new string[3] {"Jitter", "Butterfly", "OK"}).ShowDialog();
-            new Message($@"saved to {directory}\Clicks\clicks{fileNum}.drill", "outliers removed.").ShowDialog(); //show dialog
+            new Message($@"saved to {directory}\Clicks\clicks{fileNum}.drill", $"{outliersRemoved} outliers removed.").ShowDialog(); //show dialog
 
             button1.Enabled = true;
         }
 
-        private void RemoveOutliers(ref string clicks)
+        private int RemoveOutliers(ref string data)
         {
-            string[] splitClicks = clicks.Split(',');
+            int outliersRemoved = 0;
+
+            string[] splitData = data.Split(',');
+            string[] splitClicks = splitData.Take(splitData.Length - 1).ToArray();
+
+            int recordingTime = int.Parse(splitData[splitData.Length - 1]);
+
             for (int i = 0; i < splitClicks.Length - 1; i++)
             {
-                if (splitClicks.Contains("0-") || splitClicks.Contains("-0"))
+                string[] clickDelays = splitClicks[i].Split('-');
+                if (int.Parse(clickDelays[0]) > 150 || int.Parse(clickDelays[0]) == 0
+                    || int.Parse(clickDelays[1]) > 80 || int.Parse(clickDelays[1]) == 0)
                 {
                     splitClicks = splitClicks.Where((source, index) => index != i).ToArray();
+                    recordingTime -= int.Parse(clickDelays[0]) + int.Parse(clickDelays[1]);
+                    i--;
+                    outliersRemoved++;
                 }
             }
             clicks = string.Join(",", splitClicks);
+            clicks += "," + recordingTime;
+            return outliersRemoved;
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            OpenFileDialog o = new OpenFileDialog();
-            o.Filter = "drill files (*.drill)|*.drill";
-            o.InitialDirectory = directory + @"\Clicks";
-
-            if (o.ShowDialog() == DialogResult.OK)
+            if (button3.Text == "Enable")
             {
-                LoadClicks(o.FileName);
+                currentClick = 0;
+
+                OpenFileDialog o = new OpenFileDialog();
+                o.Filter = "drill files (*.drill)|*.drill";
+                o.InitialDirectory = directory + @"\Clicks";
+
+                if (o.ShowDialog() == DialogResult.OK)
+                {
+                    LoadClicks(o.FileName);
+                }
+                else
+                {
+                    new Message("There was an issue", "Try again").ShowDialog();
+                }
             }
             else
             {
-                new Message("There was an issue", "Try again").ShowDialog();
+                new Message("Error:", "Please disable the clicker before loading clicks").ShowDialog();
             }
         }
 
@@ -153,7 +177,7 @@ namespace ClickRecorder
         private ClickInfo GetClickInfo(string data)
         {
             string[] splitData = data.Split(',');
-            float recordingTime = float.Parse(splitData[splitData.Length - 1]);
+            int recordingTime = int.Parse(splitData[splitData.Length - 1]);
             string[] clicks = new string[splitData.Length - 1];
             Array.Copy(splitData, 1, clicks, 0, splitData.Length - 1);
 
@@ -162,7 +186,7 @@ namespace ClickRecorder
                 Clicks = clicks,
                 NumOfClicks = clicks.Length,
                 Seconds = recordingTime,
-                AverageCPS = clicks.Length / recordingTime
+                AverageCPS = (float)(clicks.Length / TimeSpan.FromMilliseconds(recordingTime).TotalSeconds)
             };
         }
 
