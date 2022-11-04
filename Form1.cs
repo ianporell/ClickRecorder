@@ -5,6 +5,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static ClickRecorder.Form1;
 
 namespace ClickRecorder
 {
@@ -94,9 +95,7 @@ namespace ClickRecorder
             clicks += recordingTime.ElapsedMilliseconds;
             recordingTime.Stop();
 
-            Trace.WriteLine(clicks);
             int outliersRemoved = RemoveOutliers(ref clicks);
-            Trace.WriteLine(clicks);
 
             int fileNum = int.Parse(File.ReadAllText(directory + @"\Clicks\info.drill")) + 1;
             File.WriteAllText(directory + @"\Clicks\info.drill", fileNum.ToString());
