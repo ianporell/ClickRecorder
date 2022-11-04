@@ -122,8 +122,8 @@ namespace ClickRecorder
             for (int i = 0; i < splitClicks.Length - 1; i++)
             {
                 string[] clickDelays = splitClicks[i].Split('-');
-                if (int.Parse(clickDelays[0]) > 150 || int.Parse(clickDelays[0]) == 0
-                    || int.Parse(clickDelays[1]) > 80 || int.Parse(clickDelays[1]) == 0)
+                if (int.Parse(clickDelays[0]) > 170 || int.Parse(clickDelays[0]) == 0
+                    || int.Parse(clickDelays[1]) > 100 || int.Parse(clickDelays[1]) == 0)
                 {
                     splitClicks = splitClicks.Where((source, index) => index != i).ToArray();
                     recordingTime -= int.Parse(clickDelays[0]) + int.Parse(clickDelays[1]);
