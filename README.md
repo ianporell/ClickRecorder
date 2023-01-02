@@ -6,7 +6,7 @@ Fix Cps calculation<br>
 Add Delay Randomization (Maybe)<br>
 
 # How to use!
-![](ezgif-5-8dba2f0897.gif)br>
+![](ezgif-5-8dba2f0897.gif)<br>
 Simply click in the click recording window 100 times to save the file.<br>
 
 #Bugs
