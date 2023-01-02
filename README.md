@@ -9,5 +9,5 @@ Add Delay Randomization (Maybe)<br>
 ![](ezgif-5-8dba2f0897.gif)<br>
 Simply click in the click recording window 100 times to save the file.<br>
 
-#Bugs
+# Bugs
 Average CPS is displayed incorrectly.
