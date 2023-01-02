@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -23,7 +24,7 @@ namespace ClickRecorder
 
         private static string clicks = ""; //string holds the delay between clicks. if the time from the last click was 50ms and the
                                            //mouse was held down for 10ms, and that was repeated twice, it would look like 10-50,10-50,10-50
-                                           //last value is total time the recording took in seconds. Example: 4-20,3-30,0.9342
+                                           //last value is total time the recording took in milliseconds. Example: 4-20,3-30,856
 
         private const int clickLimit = 100; //how many clicks will get recorded before recording is over
 
@@ -31,7 +32,13 @@ namespace ClickRecorder
 
         private static Stopwatch recordingTime = new Stopwatch(); //stopwatch gets time that the recording lasted
 
-        private static string directory = @"C:\Users\chris\Downloads"; //AppDomain.CurrentDomain.BaseDirectory;
+        private static string assemblyDirectory = Path.GetDirectoryName(
+                                                      Uri.UnescapeDataString(
+                                                          new UriBuilder(
+                                                              Assembly.GetExecutingAssembly().CodeBase
+                                                          ).Path
+                                                      )
+                                                  );
 
         [DllImport("user32.dll", SetLastError = true)]
         private static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
@@ -96,16 +103,35 @@ namespace ClickRecorder
             recordingTime.Stop();
 
             int outliersRemoved = RemoveOutliers(ref clicks);
+            if (outliersRemoved > 50)
+            {
+                new Message("CPS is too low", "Over 50 clicks were detected as outliers. Click a higher speed or use a preset").ShowDialog();
+            }
+            else
+            {
+                if (!Directory.Exists(assemblyDirectory + @"\Clicks"))
+                {
+                    Directory.CreateDirectory(assemblyDirectory + @"\Clicks");
+                }
+                if (!File.Exists(assemblyDirectory + @"\Clicks\info.drill"))
+                {
+                    File.Create(assemblyDirectory + $@"\Clicks\info.drill").Close();
+                    File.WriteAllText(assemblyDirectory + $@"\Clicks\info.drill", "0");
+                }
+                if (!int.TryParse(File.ReadAllText(assemblyDirectory + @"\Clicks\info.drill"), out int fileNum))
+                {
+                    File.WriteAllText(assemblyDirectory + $@"\Clicks\info.drill", "0");
+                    fileNum = 0;
+                }
+                fileNum++;
 
-            int fileNum = int.Parse(File.ReadAllText(directory + @"\Clicks\info.drill")) + 1;
-            File.WriteAllText(directory + @"\Clicks\info.drill", fileNum.ToString());
+                File.WriteAllText(assemblyDirectory + @"\Clicks\info.drill", fileNum.ToString());
 
-            File.Create(directory + $@"\Clicks\clicks{fileNum}.drill").Close();
-            File.WriteAllText(directory + $@"\Clicks\clicks{fileNum}.drill", clicks);
+                File.Create(assemblyDirectory + $@"\Clicks\clicks{fileNum}.drill").Close();
+                File.WriteAllText(assemblyDirectory + $@"\Clicks\clicks{fileNum}.drill", clicks);
 
-            //new Message("Remove outliers?", "If so, select jitter or butterfly", new string[3] {"Jitter", "Butterfly", "OK"}).ShowDialog();
-            new Message($@"saved to {directory}\Clicks\clicks{fileNum}.drill", $"{outliersRemoved} outliers removed.").ShowDialog(); //show dialog
-
+                new Message($@"saved to {assemblyDirectory}\Clicks\clicks{fileNum}.drill", $"{outliersRemoved} outliers removed.").ShowDialog(); //show dialog
+            }
             button1.Enabled = true;
         }
 
@@ -143,7 +169,7 @@ namespace ClickRecorder
 
                 OpenFileDialog o = new OpenFileDialog();
                 o.Filter = "drill files (*.drill)|*.drill";
-                o.InitialDirectory = directory + @"\Clicks";
+                o.InitialDirectory = assemblyDirectory + @"\Clicks";
 
                 if (o.ShowDialog() == DialogResult.OK)
                 {
@@ -169,8 +195,9 @@ namespace ClickRecorder
                 new Message("Warning:", "CPS is higher than recommended.").ShowDialog();
             }
             loadedClicks = clickInfo;
-            label1.Text = $"Average CPS: {clickInfo.AverageCPS}";
-            label2.Text = $"Total Clicks: {clickInfo.NumOfClicks}";
+            label1.Text = "Clicks successfully loaded";
+            label2.Text = filePath.Split('\\').Last();
+            label3.Text = $"Average CPS: {clickInfo.AverageCPS}";
         }
 
         private ClickInfo GetClickInfo(string data)
@@ -230,13 +257,14 @@ namespace ClickRecorder
                 && mc == GetForegroundWindow()
                 && (ci.HCursor.ToInt32() > 100000 || WorksInMenus))
             {
-                timer1.Interval = int.Parse(loadedClicks.Clicks[currentClick].Split('-')[1]);
+                currentClick = rand.Next(0, loadedClicks.NumOfClicks - 1);
+
+                int currentClickDelay = int.Parse(loadedClicks.Clicks[currentClick].Split('-')[1]);
+                timer1.Interval = rand.Next(currentClickDelay - 10, currentClickDelay + 10);
 
                 PostMessage(mc, 0x201, 0, 0);
                 await Task.Delay(int.Parse(loadedClicks.Clicks[currentClick].Split('-')[0]));
                 PostMessage(mc, 0x202, 0, 0);
-
-                currentClick = rand.Next(0, loadedClicks.NumOfClicks - 1);
             }
         }
 
