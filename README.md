@@ -1,4 +1,6 @@
 # ClickRecorder
+DOWNLOAD HERE: [ClickRecorder.exe](ClickRecorder) <br>
+
 Todo:<br>
 Fix cursor visibility bug ✔️<br>
 Convert total time clicking to MS ✔️<br>
