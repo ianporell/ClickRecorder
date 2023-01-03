@@ -1,5 +1,5 @@
 # ClickRecorder
-DOWNLOAD HERE: [ClickRecorder.exe](ClickRecorder) <br>
+DOWNLOAD HERE: [ClickRecorder.exe](ClickRecorder.exe) <br>
 
 Todo:<br>
 Fix cursor visibility bug ✔️<br>
